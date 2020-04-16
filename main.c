@@ -3,18 +3,34 @@
 
 #include "gc.h"
 
+#define CONS 1
+#define INT 2
+
+typedef struct Value Value;
+
+typedef struct Value {
+	union {
+		struct {
+			Value* car;
+			Value* cdr;
+		};
+		int i;
+	};
+	int kind;
+} Value;
+
 Value* make_cons(Value *car, Value *cdr) {
-	Value *node = gc_alloc();
+	Value *node = gc_alloc(sizeof(Value), 3);
 	node->kind = CONS;
-	node->body.cons.car = car;
-	node->body.cons.cdr = cdr;
+	node->car = car;
+	node->cdr = cdr;
 	return node;
 }
 
 Value* make_int(int i) {
-	Value *node = gc_alloc();
+	Value *node = gc_alloc(sizeof(Value), 0);
 	node->kind = INT;
-	node->body.i = i;
+	node->i = i;
 	return node;
 }
 
@@ -31,11 +47,11 @@ void print_list(Value *node, int depth) {
 		return;
 	}
 	if (node->kind == INT) {
-		printf(" . %d", node->body.i);
+		printf(" . %d", node->i);
 	} else if (node->kind == CONS) {
 		printf(" ");
-		print_value_inner(node->body.cons.car, depth + 1);
-		print_list(node->body.cons.cdr, depth + 1);
+		print_value_inner(node->car, depth + 1);
+		print_list(node->cdr, depth + 1);
 	} else {
 		printf("invalid node");
 	}
@@ -45,11 +61,11 @@ void print_value_inner(Value *node, int depth) {
 	if (!node) {
 		printf("nil");
 	} else if (node->kind == INT) {
-		printf("%d", node->body.i);
+		printf("%d", node->i);
 	} else if (node->kind == CONS) {
 		printf("(");
-		print_value_inner(node->body.cons.car, depth + 1);
-		print_list(node->body.cons.cdr, depth + 1);
+		print_value_inner(node->car, depth + 1);
+		print_list(node->cdr, depth + 1);
 		printf(")");
 	} else {
 		printf("invalid node");
@@ -77,7 +93,7 @@ int main(int argc, char **argv) {
 	make_cons(make_int(3), make_cons(0, make_cons(make_int(7), 0)));
 	
 	Value *loop = make_cons(make_int(999), 0);
-	loop->body.cons.cdr = loop;
+	loop->cdr = loop;
 	
 	show_value("i", i);
 	show_value("nil", nil);
